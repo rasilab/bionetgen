@@ -24,6 +24,8 @@ struct RateLaw =>
     Factor      => '$',        # Statistical or Multiplicity factor
     TotalRate   => '$',        # If true, this ratelaw specifies the Total reaction rate.
                                #   If false (default), the ratelaw specifies a Per Site reaction rate.
+    Tag         => '$',        # If true, this reaction is tagged for output every time it fires in NFSim.
+                               #   Default: false.
     LocalRatelawsHash  => '%', # A map from locally-evaluated ratelaw "fingerprints" and instances of those ratelaws.
                                #   This allows for efficient reuse of local ratelaws.
 };
@@ -43,7 +45,7 @@ my $n_RateLaw = 0;
 sub copy
 {
     my $rl = shift @_;
-    my $rl_copy = RateLaw->new( Type=>$rl->Type, Constants=>[@{$rl->Constants}], Factor=>$rl->Factor, TotalRate=>$rl->TotalRate );
+    my $rl_copy = RateLaw->new( Type=>$rl->Type, Constants=>[@{$rl->Constants}], Factor=>$rl->Factor, TotalRate=>$rl->TotalRate , Tag=>$rl->Tag);
     #%{$rl_copy->LocalRatelawsHash} = %{$rl_copy->LocalRatelawsHash};
     #%{$rl_copy->LocalRatelawsHash} = %{$rl_copy->LocalRatelawsHash};
     ++$n_RateLaw;
@@ -68,6 +70,7 @@ sub newRateLaw
     my $strptr     = shift @_;
     my $model      = shift @_;
     my $totalRate  = @_ ? shift @_ : 0;
+    my $tag = @_ ? shift @_ : 0;
     my $reactants  = @_ ? shift @_ : undef;
     my $basename   = @_ ? shift @_ : "_rateLaw";
 
@@ -231,7 +234,7 @@ sub newRateLaw
     $$strptr = $string_left;
 
     # Create new RateLaw object
-    my $rl = RateLaw->new( Type=>$rate_law_type, Constants=>[@rate_constants], TotalRate=>$totalRate, Factor=>$rate_fac );
+    my $rl = RateLaw->new( Type=>$rate_law_type, Constants=>[@rate_constants], TotalRate=>$totalRate, Tag=>$tag, Factor=>$rate_fac );
 
     # Validate rate law type
     $err = $rl->validate($reactants,$model);
@@ -343,7 +346,7 @@ sub newRateLawNet
     $$strptr = $string_left;
 
     # Create new RateLaw object
-    my $rl = RateLaw->new( Type=>$rate_law_type, Constants=>[@rate_constants], TotalRate=>0, Factor=>$rate_fac );
+    my $rl = RateLaw->new( Type=>$rate_law_type, Constants=>[@rate_constants], TotalRate=>0, Tag=>0, Factor=>$rate_fac );
 
     # Validate rate law type
     $err = $rl->validate();
@@ -475,7 +478,7 @@ sub evaluate_local
 
             # create new ratelaw
             my $rl_type = $local_param->Type eq "Function" ? "Function" : "Ele";
-            $local_rl = RateLaw->new( Type=>$rl_type, Constants=>[$local_name], Factor=>$rl->Factor, TotalRate=>0 );
+            $local_rl = RateLaw->new( Type=>$rl_type, Constants=>[$local_name], Factor=>$rl->Factor, TotalRate=>0, Tag=>0);
             ++$RateLaw::n_Ratelaw;
 
             # add this local ratelaw to the LocalRatelawsHash
@@ -525,7 +528,7 @@ sub evaluate_local
 
                 # create new ratelaw
                 my $rl_type = $local_param->Type eq "Function" ? "Function" : "Ele";
-                $local_rl = RateLaw->new( Type=>$rl_type, Constants=>[$local_name], Factor=>$rl->Factor, TotalRate=>0 );
+                $local_rl = RateLaw->new( Type=>$rl_type, Constants=>[$local_name], Factor=>$rl->Factor, TotalRate=>0, Tag=>0);
                 ++$RateLaw::n_Ratelaw;
 
                 # add this ratelaw to LocalRatelawsHash
@@ -584,6 +587,8 @@ sub equivalent
     return 0  unless ( $rl1->Factor == $rl2->Factor );   
     # compare totalrate flag
     return 0  unless ( $rl1->TotalRate eq $rl2->TotalRate );
+    # compare tag flag
+    return 0  unless ( $rl1->Tag eq $rl2->Tag );
     
     if ( $rl1->Type eq 'Function' )
     {
@@ -959,6 +964,8 @@ sub toXML
     $string .= " type=\"" . $rl->Type . "\"";
     # total rate attribute
     $string .= " totalrate=\"" . $rl->TotalRate . "\"";
+    # tag attribute
+    $string .= " tag=\"" . $rl->Tag . "\"";
 
     # StatFactor (Is this used anymore??  --Justin)
     unless ( $rl->Factor == 1 )
@@ -1024,6 +1031,8 @@ sub toXMLFunction
     $string .= " name=\"" . $rl->Constants->[0] . "\"";
     #  total rate attribute
     $string .= " totalrate=\"" . $rl->TotalRate . "\"";
+    # tag attribute
+    $string .= " tag=\"" . $rl->Tag . "\"";
     # end of attributes
     $string .= ">\n";
 
@@ -1086,6 +1095,8 @@ sub toXMLFunctionProduct
     $string .= " name2=\"" . $rl->Constants->[1] . "\"";
     #  total rate attribute
     $string .= " totalrate=\"" . $rl->TotalRate . "\"";
+    # tag attribute
+    $string .= " tag=\"" . $rl->Tag . "\"";
     # end of attributes
     $string .= ">\n";
 

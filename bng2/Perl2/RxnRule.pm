@@ -48,6 +48,7 @@ struct RxnRule =>
 	RateLaw   => 'RateLaw',    # RateLaw
     TotalRate => '$',          # indicates whether the ratelaws corresponding to this rule define a TotalRate (1)
                                #   or a PerSite rate (default=0)
+    Tag     => '$',    # Indicates whether reaction is output everytime it is fired in NFSim
 
 	Priority  => '$',
 	MultScale => '$',    # Factor by which to scale multiplicity to account for symmetry in rule
@@ -119,6 +120,7 @@ sub copy
     $rr_copy->RateLaw( $rr->RateLaw->copy() ) if ( defined $rr->RateLaw );
 
     $rr_copy->TotalRate( $rr->TotalRate );
+    $rr_copy->Tag( $rr->Tag );
     $rr_copy->Priority( $rr->Priority );
     $rr_copy->MultScale( $rr->MultScale );
     
@@ -186,6 +188,7 @@ sub newRxnRule
 	my $DeleteMolecules = 0;
 	my $MoveConnected   = 0;
 	my $TotalRate       = 0;
+	my $Tag             = 0;
 
     # get parameter list, compartment list and molecule type list
 	my $plist  = $model->ParamList;
@@ -461,13 +464,18 @@ sub newRxnRule
     if ( $string =~ s/(^|\s)TotalRate(\s|$)/$2/ )
     {   $TotalRate = 1;   }
 
+    # Look for Tag attribute
+    # (default value is 0)
+    if ( $string =~ s/(^|\s)Tag(\s|$)/$2/ )
+    {   $Tag = 1;   }
+
     # Extract the Ratelaws..
 
     # Get forward ratelaw..
     # temporarily add Reference tags as names in the ParamList
     if (%rrefs) { setRefs(\%rrefs, '', $plist); }
     # Parse and Create the ratelaw
-    ( $rl, $err ) = RateLaw::newRateLaw( \$string, $model, $TotalRate, \@reac );
+    ( $rl, $err ) = RateLaw::newRateLaw( \$string, $model, $TotalRate, $Tag, \@reac );
     if ($err) { return [], $err; }
     # unset temporary names of Reference tags
     if (%rrefs) { unsetRefs(\%rrefs, $plist); }
@@ -485,7 +493,7 @@ sub newRxnRule
             # get reverse rate law
             $string =~ s/^\s*,\s*//;
 	        if (%prefs) { setRefs( \%prefs, '', $plist ); }
-	        ($rl, $err) = RateLaw::newRateLaw( \$string, $model, $TotalRate, \@prod );
+	        ($rl, $err) = RateLaw::newRateLaw( \$string, $model, $TotalRate, $Tag, \@prod );
 	        if ($err) { return [], $err; }
 	        if (%prefs) { unsetRefs( \%prefs, $plist ); }
 	        push @rate_laws, $rl;  
@@ -678,6 +686,7 @@ sub newRxnRule
 	$rr->Pinclude( [@Pinclude] );
     $rr->Direction(1);
 	$rr->TotalRate($TotalRate);
+	$rr->Tag($Tag);
 	$rr->DeleteMolecules($DeleteMolecules);
 	$rr->MoveConnected($MoveConnected);
 	$rr->RRefs( {%rrefs} );
@@ -702,6 +711,7 @@ sub newRxnRule
 		$rr->Rinclude( [@Pinclude] );
         $rr->Direction(-1);
 		$rr->TotalRate($TotalRate);
+		$rr->Tag($Tag);
 		$rr->DeleteMolecules($DeleteMolecules);
 		$rr->MoveConnected($MoveConnected);		
 		$rr->RRefs( {%prefs} );
@@ -901,6 +911,7 @@ sub toString
 
     # Keywords
 	$string .= " TotalRate" if ( $rr->TotalRate );
+	$string .= " Tag" if ( $rr->Tag );
     $string .= " DeleteMolecules" if ( $rr->DeleteMolecules );
     $string .= " MoveConnected"	if ( $rr->MoveConnected );
 
