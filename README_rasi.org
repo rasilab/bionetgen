@@ -4,3 +4,4 @@
 - Optionally designate molecule siteas as polymer sites for efficient simulation of mRNA translation. This is done by following the state definition by =:POLYMER=polymer_typeinteger-polymer_location-polymer_interaction_distance)
   - POLYMER is a required keyword
   - If POLYMER is given then, three arguments are required: polymer_type, polymer_location, polymer_interaction_distance are all non-negative integers separated by hyphen.
+  - These patterns are read from the BNGL file and written to the XML file in [[file:bng2/Perl2/ComponentType.pm]]. See =git diff= from today.

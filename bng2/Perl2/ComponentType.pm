@@ -22,18 +22,22 @@ sub first_index (&@) {
 
 struct ComponentType=> {
   Name=> '$',
-  States=> '@', # First element of States array is the default state, which 
+  States=> '@', # First element of States array is the default state, which
                 # is used in creating new molecules that don't have user-specified
                 # state attributes.
   Edges=> '@',         # Last two are not currently used in checking
-  Compartments=> '@'
+  Compartments=> '@',
+  Polymer=> '$',
+  PolymerType=> '$',
+  PolymerLocation=> '$',
+  PolymerInteractionDistance=> '$',
 };
 sub readString{
   my $ctype= shift;
   my $strptr= shift;
 
   my $string_left=$$strptr;
-  
+
   # Get component name (cannot start with a number)
   if ( $string_left =~ s/^([A-Za-z_]\w*)// )
   {
@@ -43,7 +47,7 @@ sub readString{
   {
 	return undef, "Invalid component name in '$string_left' (must begin with a letter or underscore).";
   }
-	
+
   # Get component state (marked by ~) edges (marked by !)
   my @states=();
   my @compartments=();
@@ -65,6 +69,13 @@ sub readString{
     elsif ($string_left=~ /^[,)]/){ # Terminator characters for component
       last;
     }
+    # extract polymer molecule properties
+    elsif ($string_left=~ s/^:(POLYMER)-([0-9]+)-([0-9]+)-([0-9]+)//) {
+      $ctype->Polymer($1);
+      $ctype->PolymerType($2);
+      $ctype->PolymerLocation($3);
+      $ctype->PolymerInteractionDistance($4);
+    }
     else {
       return("Invalid syntax at $string_left");
     }
@@ -79,7 +90,7 @@ sub readString{
   if (@compartments){
     $ctype->Compartments([@compartments]);
   }
-  
+
   $$strptr= $string_left;
   return("");
 }
@@ -88,14 +99,14 @@ sub readString{
 sub copy
 {
     my $comp = shift;
-    
-    my $comp_copy = ComponentType::new();    
+
+    my $comp_copy = ComponentType::new();
     $comp_copy->Name( $comp->Name );
     $comp_copy->States( [@{$comp->States}] );
     $comp_copy->Edges( [@{$comp->Edges}] );
-    $comp_copy->Compartments( [@{$comp->Compartments}] );            
-    
-    return $comp_copy;   
+    $comp_copy->Compartments( [@{$comp->Compartments}] );
+
+    return $comp_copy;
 }
 
 sub toString{
@@ -125,7 +136,7 @@ sub toStringSSC{
 #####
 sub toSBMLMultiSpeciesTypeFeatures
 {
-    my $ctype = shift @_; 
+    my $ctype = shift @_;
     my $cid = shift @_;
     my $mName = shift @_;
     my $sbmlMultiSpeciesInfo_ref = shift @_;
@@ -139,7 +150,7 @@ sub toSBMLMultiSpeciesTypeFeatures
     my $occur = 1;
     my $fullname = '';
     if (@{$ctype->States}){
-      
+
       my $indent2  = "    ".$indent;
       my $indent3  = "    ".$indent2;
       my $sid = '';
@@ -165,7 +176,7 @@ sub toSBMLMultiSpeciesTypeFeatures
 
 sub toSBMLMultiSpeciesTypeBinding
 {
-    my $ctype = shift @_; 
+    my $ctype = shift @_;
     my $cid = shift @_;
     my $mName = shift @_;
     my $sbmlMultiSpeciesInfo_ref = shift @_;
@@ -196,7 +207,7 @@ sub toSBMLMultiSpeciesTypeBinding
     }
     my $exists = first_index {$_  eq $cid } @{$speciesIdHash_ref->{'Components'}{$fullname}};
     if ($exists == -1){
-      push @{$speciesIdHash_ref->{'Components'}{$fullname}}, $cid;  
+      push @{$speciesIdHash_ref->{'Components'}{$fullname}}, $cid;
     }
     push @{$sbmlMultiSpeciesInfo_ref->{$cid}}, $cid;
     push @{$sbmlMultiSpeciesInfo_ref->{$cid}}, $ststring;
@@ -232,6 +243,14 @@ sub toXML{
     }
     $ostring.= $indent2."</ListOfAllowedStates>\n";
   }
+  if ($ctype->Polymer){
+    $ostring.= $indent2."<PolymerType id=\"".$ctype->PolymerType."\">\n";
+    $ostring.= $indent2."</PolymerType>\n";
+    $ostring.= $indent2."<PolymerLocation id=\"".$ctype->PolymerLocation."\">\n";
+    $ostring.= $indent2."</PolymerLocation>\n";
+    $ostring.= $indent2."<PolymerInteractionDistance id=\"".$ctype->PolymerInteractionDistance."\">\n";
+    $ostring.= $indent2."</PolymerInteractionDistance>\n";
+  }
 
   if ($ostring){
     $string.=">\n";
@@ -246,15 +265,15 @@ sub toXML{
 
 sub writeMDL
 {
-    my $ctype = shift; 
-    my $string = $ctype->Name; 
-    
+    my $ctype = shift;
+    my $string = $ctype->Name;
+
     if (@{$ctype->States}){
        foreach my $state (@{$ctype->States}){
-              $string .= "~".$state; 
+              $string .= "~".$state;
 	      }
      }
-    return $string; 
+    return $string;
 }
 
 
