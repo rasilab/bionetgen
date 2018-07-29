@@ -1,0 +1,6 @@
+* Changes made by Rasi
+
+** [2018-07-29 Sun]
+- Optionally designate molecule siteas as polymer sites for efficient simulation of mRNA translation. This is done by following the state definition by =:POLYMER=polymer_typeinteger-polymer_location-polymer_interaction_distance)
+  - POLYMER is a required keyword
+  - If POLYMER is given then, three arguments are required: polymer_type, polymer_location, polymer_interaction_distance are all non-negative integers separated by hyphen.
