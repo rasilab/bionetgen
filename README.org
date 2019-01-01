@@ -1,0 +1,24 @@
+#+TITLE: BioNetGen
+
+Forked from [[https://github.com/RuleWorld/BioNetGen]].
+
+We will be using the =Perl= script [[file:bng2/BNG2.pl]] to convert our [[http://pysb.org/][PySB]] formatted =.py= files to
+=.xml= files for input to the [[http://michaelsneddon.net/nfsim/][NFsim]] simulator.
+
+=Perl 5= should be installed by default on Ubuntu machines.
+You can check by:
+#+BEGIN_SRC sh
+perl -v
+#+END_SRC
+
+Clone this repository into your =~/git= folder:
+#+BEGIN_SRC sh :exports code
+git clone https://github.com/rasilab/bionetgen.git
+#+END_SRC
+
+Add the [[file:bng2/BNG2.pl]] script to your =PATH= variable so that =PySB= can find it.
+For example, I add the following to my =~/.bashrc= script:
+#+BEGIN_SRC sh :exports code
+export PATH=$PATH":/home/rasi/git/bionetgen/bng2"
+#+END_SRC
+
